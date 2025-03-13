@@ -214,6 +214,7 @@ func (r *Reader) Reset(reader io.Reader) {
 // WriteTo efficiently uncompresses the data from the Reader underlying source to w.
 func (r *Reader) WriteTo(w io.Writer) (n int64, err error) {
 	switch r.state.state {
+	case readState:
 	case closedState, errorState:
 		return 0, r.state.err
 	case newState:
