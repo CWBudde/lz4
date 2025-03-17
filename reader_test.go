@@ -319,3 +319,31 @@ func TestValidFrameHeader(t *testing.T) {
 		})
 	}
 }
+
+func TestReader_WriteTo(t *testing.T) {
+	data := pg1661LZ4
+	buf := new(bytes.Buffer)
+	src := bytes.NewReader(data)
+	zr := lz4.NewReader(src)
+
+	// Read header only
+	n, err := zr.Read(nil)
+	if err != nil {
+		t.Fatalf("error reading header: %v", err)
+	}
+	if n != 0 {
+		t.Fatalf("expecting zero byte read, got %d bytes", n)
+	}
+
+	n64, err := zr.WriteTo(buf)
+	if err != nil {
+		t.Fatalf("error during WriteTo: %v", err)
+	}
+	if n64 != int64(len(pg1661)) {
+		t.Fatalf("expecting to read %d bytes, got %d", len(pg1661), n64)
+	}
+
+	if !reflect.DeepEqual(buf.Bytes(), pg1661) {
+		t.Fatal("result does not match original")
+	}
+}
