@@ -155,6 +155,21 @@ func TestReader_Reset(t *testing.T) {
 	}
 }
 
+func TestReader_Append(t *testing.T) {
+	data := randomAppendedLZ4
+
+	src := bytes.NewReader(data)
+	zr := lz4.NewReader(src)
+
+	b, err := io.ReadAll(zr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(b, random) {
+		t.Fatal("result does not match original")
+	}
+}
+
 type brokenWriter int
 
 func (w *brokenWriter) Write(p []byte) (n int, err error) {

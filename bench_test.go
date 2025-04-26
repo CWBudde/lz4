@@ -85,14 +85,15 @@ func mustLoadFile(f string) []byte {
 }
 
 var (
-	pg1661    = mustLoadFile("testdata/pg1661.txt.gz")
-	digits    = mustLoadFile("testdata/e.txt.gz")
-	twain     = mustLoadFile("testdata/Mark.Twain-Tom.Sawyer.txt.gz")
-	random    = mustLoadFile("testdata/random.data.gz")
-	pg1661LZ4 = mustLoadFile("testdata/pg1661.txt.lz4")
-	digitsLZ4 = mustLoadFile("testdata/e.txt.lz4")
-	twainLZ4  = mustLoadFile("testdata/Mark.Twain-Tom.Sawyer.txt.lz4")
-	randomLZ4 = mustLoadFile("testdata/random.data.lz4")
+	pg1661            = mustLoadFile("testdata/pg1661.txt.gz")
+	digits            = mustLoadFile("testdata/e.txt.gz")
+	twain             = mustLoadFile("testdata/Mark.Twain-Tom.Sawyer.txt.gz")
+	random            = mustLoadFile("testdata/random.data.gz")
+	pg1661LZ4         = mustLoadFile("testdata/pg1661.txt.lz4")
+	digitsLZ4         = mustLoadFile("testdata/e.txt.lz4")
+	twainLZ4          = mustLoadFile("testdata/Mark.Twain-Tom.Sawyer.txt.lz4")
+	randomLZ4         = mustLoadFile("testdata/random.data.lz4")
+	randomAppendedLZ4 = mustLoadFile("testdata/random_appended.data.lz4")
 )
 
 func benchmarkUncompress(b *testing.B, compressed []byte) {
