@@ -117,6 +117,7 @@ func (r *Reader) Read(buf []byte) (n int, err error) {
 	for len(buf) > 0 {
 		var bn int
 		if r.idx == 0 {
+		read:
 			if r.isNotConcurrent() {
 				bn, err = r.read(buf)
 			} else {
@@ -129,6 +130,21 @@ func (r *Reader) Read(buf []byte) (n int, err error) {
 			}
 			switch err {
 			case nil:
+			case lz4errors.ErrEndOfStream:
+
+				// Read Checksum.
+				err = r.frame.CloseR(r.src)
+				if err != nil {
+					return
+				}
+
+				//Check for new stream.
+				r.Reset(r.src)
+				if err = r.init(); r.state.next(err) {
+					return
+				}
+
+				goto read
 			case io.EOF:
 				if er := r.frame.CloseR(r.src); er != nil {
 					err = er
@@ -235,6 +251,7 @@ func (r *Reader) WriteTo(w io.Writer) (n int64, err error) {
 	for {
 		var bn int
 		var dst []byte
+	read:
 		if r.isNotConcurrent() {
 			bn, err = r.read(data)
 			dst = data[:bn]
@@ -249,6 +266,26 @@ func (r *Reader) WriteTo(w io.Writer) (n int64, err error) {
 		}
 		switch err {
 		case nil:
+		case lz4errors.ErrEndOfStream:
+
+			// Read Checksum.
+			err = r.frame.CloseR(r.src)
+			if err != nil {
+				return
+			}
+
+			//Check for new stream.
+			r.Reset(r.src)
+			if err = r.init(); r.state.next(err) {
+
+				if err == io.EOF {
+					err = nil
+				}
+
+				return
+			}
+
+			goto read
 		case io.EOF:
 			err = r.frame.CloseR(r.src)
 			return
