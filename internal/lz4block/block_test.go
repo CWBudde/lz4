@@ -5,7 +5,7 @@ package lz4block_test
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/pierrec/lz4/v4"
@@ -88,7 +88,7 @@ func TestCompressUncompressBlock(t *testing.T) {
 	}
 
 	for _, tc := range rawFiles {
-		src, err := ioutil.ReadFile(tc.file)
+		src, err := os.ReadFile(tc.file)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -131,7 +131,7 @@ func TestCompressCornerCase_CopyDstUpperBound(t *testing.T) {
 	}
 
 	file := "../../testdata/upperbound.data"
-	src, err := ioutil.ReadFile(file)
+	src, err := os.ReadFile(file)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -167,7 +167,7 @@ func TestIssue23(t *testing.T) {
 }
 
 func TestIssue116(t *testing.T) {
-	src, err := ioutil.ReadFile("../../fuzz/corpus/pg1661.txt")
+	src, err := os.ReadFile("../../fuzz/corpus/pg1661.txt")
 	if err != nil {
 		t.Fatal(err)
 	}
