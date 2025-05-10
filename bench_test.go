@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"io"
-	"io/ioutil"
 	"os"
 	"strings"
 	"testing"
@@ -76,7 +75,7 @@ func mustLoadFile(f string) []byte {
 	if strings.HasSuffix(f, ".gz") {
 		b, err = loadGoldenGz(f)
 	} else {
-		b, err = ioutil.ReadFile(f)
+		b, err = os.ReadFile(f)
 	}
 	if err != nil {
 		panic(err)
@@ -101,7 +100,7 @@ func benchmarkUncompress(b *testing.B, compressed []byte) {
 	zr := lz4.NewReader(r)
 
 	// Decompress once to determine the uncompressed size of testfile.
-	_, err := io.Copy(ioutil.Discard, zr)
+	_, err := io.Copy(io.Discard, zr)
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -113,7 +112,7 @@ func benchmarkUncompress(b *testing.B, compressed []byte) {
 	for i := 0; i < b.N; i++ {
 		r.Reset(compressed)
 		zr.Reset(r)
-		_, _ = io.Copy(ioutil.Discard, zr)
+		_, _ = io.Copy(io.Discard, zr)
 	}
 }
 

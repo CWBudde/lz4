@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"reflect"
@@ -43,7 +42,7 @@ func TestWriter(t *testing.T) {
 				option := option
 				t.Parallel()
 
-				raw, err := ioutil.ReadFile(fname)
+				raw, err := os.ReadFile(fname)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -158,14 +157,14 @@ func TestIssue43(t *testing.T) {
 			panic(err)
 		}
 	}()
-	_, err := io.Copy(ioutil.Discard, lz4.NewReader(r))
+	_, err := io.Copy(io.Discard, lz4.NewReader(r))
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestIssue51(t *testing.T) {
-	data, err := ioutil.ReadFile("testdata/issue51.data.gz")
+	data, err := os.ReadFile("testdata/issue51.data.gz")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -326,7 +325,7 @@ func TestWriterLegacyCommand(t *testing.T) {
 			}
 
 			// write to filesystem for further checking
-			tmp, err := ioutil.TempFile("", "")
+			tmp, err := os.CreateTemp("", "")
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -384,7 +383,7 @@ func TestWriterConcurrency(t *testing.T) {
 	}
 
 	zr := lz4.NewReader(out)
-	if _, err := io.Copy(ioutil.Discard, zr); err != nil {
+	if _, err := io.Copy(io.Discard, zr); err != nil {
 		t.Fatal(err)
 	}
 }

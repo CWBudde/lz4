@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"reflect"
 	"runtime"
@@ -288,7 +287,7 @@ func TestUncompressBadBlock(t *testing.T) {
 	if err := zr.Apply(lz4.ConcurrencyOption(4)); err != nil {
 		t.Fatal(err)
 	}
-	_, err = ioutil.ReadAll(zr)
+	_, err = io.ReadAll(zr)
 	if err == nil || !strings.Contains(err.Error(), "invalid block checksum") {
 		t.Error("bad block is not detected")
 	}
