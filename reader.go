@@ -217,10 +217,8 @@ func (r *Reader) read(buf []byte) (int, error) {
 // initial state from NewReader, but instead reading from reader.
 // No access to reader is performed.
 func (r *Reader) Reset(reader io.Reader) {
-	if r.data != nil {
-		lz4block.Put(r.data)
-		r.data = nil
-	}
+	lz4block.Put(r.data)
+	r.data = nil
 	r.frame.Reset(r.num)
 	r.state.reset()
 	r.src = reader
