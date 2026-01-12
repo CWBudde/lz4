@@ -63,7 +63,7 @@ func (r *Reader) Apply(options ...Option) (err error) {
 	return
 }
 
-// Size returns the size of the underlying uncompressed data, if set in the stream.
+// Size returns the size of the current frame's uncompressed data, if set in the stream.
 func (r *Reader) Size() int {
 	switch r.state.state {
 	case readState, closedState:
