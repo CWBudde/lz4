@@ -1,10 +1,10 @@
-//+build go1.9
-
 package lz4block_test
 
 import (
 	"bytes"
+	"compress/gzip"
 	"fmt"
+	"io"
 	"os"
 	"testing"
 
@@ -21,14 +21,14 @@ type testcase struct {
 
 var rawFiles = []testcase{
 	// {"testdata/207326ba-36f8-11e7-954a-aca46ba8ca73.png", true, nil},
-	{"../../testdata/e.txt", false, nil},
-	{"../../testdata/gettysburg.txt", true, nil},
-	{"../../testdata/Mark.Twain-Tom.Sawyer.txt", true, nil},
-	{"../../testdata/pg1661.txt", true, nil},
-	{"../../testdata/pi.txt", false, nil},
-	{"../../testdata/random.data", false, nil},
-	{"../../testdata/repeat.txt", true, nil},
-	{"../../testdata/pg1661.txt", true, nil},
+	{"../../testdata/e.txt.gz", false, nil},
+	{"../../testdata/gettysburg.txt.gz", true, nil},
+	{"../../testdata/Mark.Twain-Tom.Sawyer.txt.gz", true, nil},
+	{"../../testdata/pg1661.txt.gz", true, nil},
+	{"../../testdata/pi.txt.gz", false, nil},
+	{"../../testdata/random.data.gz", false, nil},
+	{"../../testdata/repeat.txt.gz", true, nil},
+	{"../../testdata/pg1661.txt.gz", true, nil},
 }
 
 func TestCompressUncompressBlock(t *testing.T) {
@@ -88,7 +88,7 @@ func TestCompressUncompressBlock(t *testing.T) {
 	}
 
 	for _, tc := range rawFiles {
-		src, err := os.ReadFile(tc.file)
+		src, err := readGz(tc.file)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -130,8 +130,8 @@ func TestCompressCornerCase_CopyDstUpperBound(t *testing.T) {
 		}
 	}
 
-	file := "../../testdata/upperbound.data"
-	src, err := os.ReadFile(file)
+	file := "../../testdata/upperbound.data.gz"
+	src, err := readGz(file)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -199,4 +199,17 @@ func TestWriteLiteralLen(t *testing.T) {
 		dst := make([]byte, c.dstlen)
 		lz4block.CompressBlock([]byte(c.src), dst)
 	}
+}
+
+func readGz(fname string) ([]byte, error) {
+	file, err := os.Open(fname)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	gzr, err := gzip.NewReader(file)
+	if err != nil {
+		return nil, err
+	}
+	return io.ReadAll(gzr)
 }
