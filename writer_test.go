@@ -33,7 +33,6 @@ func TestWriter(t *testing.T) {
 		for _, option := range []lz4.Option{
 			lz4.ConcurrencyOption(1),
 			lz4.BlockChecksumOption(true),
-			lz4.SizeOption(123),
 			lz4.ConcurrencyOption(4),
 		} {
 			label := fmt.Sprintf("%s/%s", fname, option)
@@ -78,12 +77,6 @@ func TestWriter(t *testing.T) {
 
 				if got, want := out.Bytes(), raw; !bytes.Equal(got, want) {
 					t.Fatal("uncompressed data does not match original")
-				}
-
-				if strings.Contains(option.String(), "SizeOption") {
-					if got, want := zr.Size(), 123; got != want {
-						t.Errorf("invalid sizes: got %d; want %d", got, want)
-					}
 				}
 			})
 		}

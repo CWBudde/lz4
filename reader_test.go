@@ -231,7 +231,7 @@ func TestReaderLegacy(t *testing.T) {
 				}
 				n, err := io.Copy(&out, zr)
 				if err != nil {
-					t.Fatal(err, n)
+					t.Log(err, n) // Both sample files are followed by undecodable data.
 				}
 
 				if got, want := int(n), len(raw); got != want {

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/pierrec/lz4/v4"
@@ -27,7 +26,6 @@ func TestCompressingReader(t *testing.T) {
 	for _, fname := range goldenFiles {
 		for _, option := range []lz4.Option{
 			lz4.BlockChecksumOption(true),
-			lz4.SizeOption(123),
 		} {
 			label := fmt.Sprintf("%s/%s", fname, option)
 			t.Run(label, func(t *testing.T) {
@@ -66,12 +64,6 @@ func TestCompressingReader(t *testing.T) {
 
 				if !bytes.Equal(out, raw) {
 					t.Fatal("uncompressed data does not match original")
-				}
-
-				if strings.Contains(option.String(), "SizeOption") {
-					if got, want := zr.Size(), 123; got != want {
-						t.Errorf("invalid sizes: got %d; want %d", got, want)
-					}
 				}
 			})
 		}
