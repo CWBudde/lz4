@@ -380,3 +380,85 @@ func TestWriterConcurrency(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+// TestWriter_ResetWithoutClose verifies that Reset returns the internal buffer
+// to the pool even when Close was not called. Before the fix, the buffer would
+// leak because Reset did not call lz4block.Put.
+func TestWriter_ResetWithoutClose(t *testing.T) {
+	data := []byte(strings.Repeat("hello world ", 1000))
+	buf := new(bytes.Buffer)
+	zw := lz4.NewWriter(buf)
+
+	// Write some data but do NOT close.
+	if _, err := zw.Write(data); err != nil {
+		t.Fatal(err)
+	}
+
+	// Reset without Close — this should not panic or leak.
+	buf.Reset()
+	zw.Reset(buf)
+
+	// The writer should still be fully functional after Reset.
+	if _, err := zw.Write(data); err != nil {
+		t.Fatal(err)
+	}
+	if err := zw.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	// Verify the output decompresses correctly.
+	out := new(bytes.Buffer)
+	if _, err := io.Copy(out, lz4.NewReader(buf)); err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(out.Bytes(), data) {
+		t.Fatal("decompressed data does not match original after Reset without Close")
+	}
+}
+
+// zeroThenDataReader returns 0, nil on the first Read call, then delegates
+// to the underlying reader. This simulates an io.Reader that occasionally
+// returns zero bytes without error (allowed by the io.Reader contract).
+type zeroThenDataReader struct {
+	r     io.Reader
+	zeros int
+}
+
+func (z *zeroThenDataReader) Read(p []byte) (int, error) {
+	if z.zeros > 0 {
+		z.zeros--
+		return 0, nil
+	}
+	return z.r.Read(p)
+}
+
+// TestWriter_ReadFromZeroLengthRead verifies that ReadFrom correctly handles
+// an io.Reader that returns 0 bytes without error. Before the fix, a zero-length
+// read would still call write and handler with empty data.
+func TestWriter_ReadFromZeroLengthRead(t *testing.T) {
+	data := []byte(strings.Repeat("test data for ReadFrom ", 500))
+
+	buf := new(bytes.Buffer)
+	zw := lz4.NewWriter(buf)
+	src := &zeroThenDataReader{r: bytes.NewReader(data), zeros: 3}
+
+	n, err := zw.ReadFrom(src)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if int(n) != len(data) {
+		t.Fatalf("ReadFrom byte count: got %d, want %d", n, len(data))
+	}
+	if err := zw.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	// Verify decompressed output matches.
+	out := new(bytes.Buffer)
+	if _, err := io.Copy(out, lz4.NewReader(buf)); err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(out.Bytes(), data) {
+		t.Fatal("decompressed data does not match original after ReadFrom with zero-length reads")
+	}
+}

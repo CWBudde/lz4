@@ -361,3 +361,108 @@ func TestReader_WriteTo(t *testing.T) {
 		t.Fatal("result does not match original")
 	}
 }
+
+// TestReader_DirectModeStaleData verifies that a zero-length uncompressed block
+// in direct mode does not cause stale pool data to be returned. Before the fix,
+// r.data was not cleared after a direct-mode decompress, so a subsequent
+// zero-length block would copy stale data from r.data.
+func TestReader_DirectModeStaleData(t *testing.T) {
+	// Build a minimal LZ4 frame containing:
+	//   1. A normal uncompressed block with known data
+	//   2. A zero-length uncompressed block (0x80000000)
+	//   3. End-of-stream marker (0x00000000)
+	//
+	// First, compress real data to get a valid frame, then append the
+	// zero-length block before the end marker.
+	payload := []byte("hello, world! this is test data for direct mode stale check.")
+	var compressed bytes.Buffer
+	zw := lz4.NewWriter(&compressed)
+	if err := zw.Apply(lz4.ConcurrencyOption(-1), lz4.ChecksumOption(false)); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := zw.Write(payload); err != nil {
+		t.Fatal(err)
+	}
+	if err := zw.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	// The frame ends with: [end mark: 00 00 00 00].
+	// Insert a zero-length uncompressed block (0x80000000) before the end mark.
+	raw := compressed.Bytes()
+	endMark := raw[len(raw)-4:]       // last 4 bytes = end mark
+	prefix := raw[:len(raw)-4]        // everything before end mark
+	var frame bytes.Buffer
+	frame.Write(prefix)
+	frame.Write([]byte{0x00, 0x00, 0x00, 0x80}) // zero-length uncompressed block
+	frame.Write(endMark)                         // end mark
+
+	// Read with a large buffer to force the direct path (buf >= block size)
+	// and concurrency=1. The zero-length block triggers the bn==0 fallback
+	// in Reader.Read, which would copy stale r.data if the fix is missing.
+	zr := lz4.NewReader(&frame)
+	if err := zr.Apply(lz4.ConcurrencyOption(-1)); err != nil {
+		t.Fatal(err)
+	}
+	var result bytes.Buffer
+	buf := make([]byte, 64*1024) // >= default block size (64KB)
+	for {
+		n, readErr := zr.Read(buf)
+		if n > 0 {
+			result.Write(buf[:n])
+		}
+		if readErr == io.EOF {
+			break
+		}
+		if readErr != nil {
+			t.Fatal(readErr)
+		}
+	}
+	if !bytes.Equal(result.Bytes(), payload) {
+		t.Fatalf("decompressed data mismatch: got %d bytes %q, want %d bytes %q",
+			result.Len(), result.Bytes(), len(payload), payload)
+	}
+}
+
+func TestReader_BufferIssue(t *testing.T) {
+	for _, opts := range [][]lz4.Option{
+		nil,
+		_o(lz4.ConcurrencyOption(2)),
+	} {
+		label := fmt.Sprintf("%v", opts)
+		t.Run(label, func(t *testing.T) {
+			pr, pw := io.Pipe()
+			go func(w *io.PipeWriter) {
+				defer w.Close()
+				file, err := os.Open("testdata/bundle.00001.part00000.lz4")
+				if err != nil {
+					w.CloseWithError(err)
+					return
+				}
+				defer file.Close()
+				io.Copy(w, file)
+			}(pw)
+			data := make([]byte, 1024*1024*4)
+			lz4Reader := lz4.NewReader(pr)
+			if err := lz4Reader.Apply(opts...); err != nil {
+				t.Fatal(err)
+			}
+			var total int
+			for {
+				n, readErr := lz4Reader.Read(data)
+				if n > 0 {
+					total += n
+				}
+				if readErr == io.EOF {
+					break
+				}
+				if readErr != nil {
+					t.Fatal(readErr)
+				}
+			}
+			if total != 128*1024*1024 {
+				t.Fatalf("incorrect number of bytes: got %d, want %d", total, 128*1024*1024)
+			}
+		})
+	}
+}
