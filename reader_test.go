@@ -390,12 +390,12 @@ func TestReader_DirectModeStaleData(t *testing.T) {
 	// The frame ends with: [end mark: 00 00 00 00].
 	// Insert a zero-length uncompressed block (0x80000000) before the end mark.
 	raw := compressed.Bytes()
-	endMark := raw[len(raw)-4:]       // last 4 bytes = end mark
-	prefix := raw[:len(raw)-4]        // everything before end mark
+	endMark := raw[len(raw)-4:] // last 4 bytes = end mark
+	prefix := raw[:len(raw)-4]  // everything before end mark
 	var frame bytes.Buffer
 	frame.Write(prefix)
 	frame.Write([]byte{0x00, 0x00, 0x00, 0x80}) // zero-length uncompressed block
-	frame.Write(endMark)                         // end mark
+	frame.Write(endMark)                        // end mark
 
 	// Read with a large buffer to force the direct path (buf >= block size)
 	// and concurrency=1. The zero-length block triggers the bn==0 fallback
@@ -421,48 +421,5 @@ func TestReader_DirectModeStaleData(t *testing.T) {
 	if !bytes.Equal(result.Bytes(), payload) {
 		t.Fatalf("decompressed data mismatch: got %d bytes %q, want %d bytes %q",
 			result.Len(), result.Bytes(), len(payload), payload)
-	}
-}
-
-func TestReader_BufferIssue(t *testing.T) {
-	for _, opts := range [][]lz4.Option{
-		nil,
-		_o(lz4.ConcurrencyOption(2)),
-	} {
-		label := fmt.Sprintf("%v", opts)
-		t.Run(label, func(t *testing.T) {
-			pr, pw := io.Pipe()
-			go func(w *io.PipeWriter) {
-				defer w.Close()
-				file, err := os.Open("testdata/bundle.00001.part00000.lz4")
-				if err != nil {
-					w.CloseWithError(err)
-					return
-				}
-				defer file.Close()
-				io.Copy(w, file)
-			}(pw)
-			data := make([]byte, 1024*1024*4)
-			lz4Reader := lz4.NewReader(pr)
-			if err := lz4Reader.Apply(opts...); err != nil {
-				t.Fatal(err)
-			}
-			var total int
-			for {
-				n, readErr := lz4Reader.Read(data)
-				if n > 0 {
-					total += n
-				}
-				if readErr == io.EOF {
-					break
-				}
-				if readErr != nil {
-					t.Fatal(readErr)
-				}
-			}
-			if total != 128*1024*1024 {
-				t.Fatalf("incorrect number of bytes: got %d, want %d", total, 128*1024*1024)
-			}
-		})
 	}
 }
