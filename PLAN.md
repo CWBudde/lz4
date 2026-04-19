@@ -164,16 +164,16 @@ These are real options, but they should come after the measurement cleanup and G
 - Test: `internal/lz4block/block_test.go`
 - Benchmark: `bench_test.go`, `internal/lz4block/bench_test.go`
 
-- [ ] Profile the repaired block compressor benchmark with `pprof` and confirm the hot symbols still match the current profile.
-- [ ] Experiment with simplifying `get`/`put` overhead:
+- [x] Profile the repaired block compressor benchmark with `pprof` and confirm the hot symbols still match the current profile.
+- [x] Experiment with simplifying `get`/`put` overhead:
   - inline more aggressively if the compiler misses something
   - reduce repeated mask/div/mod work
   - try alternate entry layouts
-- [ ] Benchmark whether a single-entry layout beats the current `table` plus `inUse` bitmap.
-- [ ] Evaluate reducing little-endian load overhead in the match scan.
-- [ ] Test whether a cheaper hash or a different `hashLog` improves throughput without unacceptable ratio loss.
-- [ ] Add an early incompressible-block bailout heuristic and measure it on `random.data` plus mixed corpora.
-- [ ] Keep output-format compatibility exact and verify with block round-trip tests and fuzz inputs.
+- [x] Benchmark whether a single-entry layout beats the current `table` plus `inUse` bitmap.
+- [x] Evaluate reducing little-endian load overhead in the match scan.
+- [x] Test whether a cheaper hash or a different `hashLog` improves throughput without unacceptable ratio loss.
+- [x] Add an early incompressible-block bailout heuristic and measure it on `random.data` plus mixed corpora.
+- [x] Keep output-format compatibility exact and verify with block round-trip tests and fuzz inputs.
 
 **Success criteria:**
 - At least one repaired block-compress benchmark improves measurably.
