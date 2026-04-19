@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/pierrec/lz4/v4"
+	"github.com/cwbudde/lz4"
 )
 
 // Fuzz function for the Reader and Writer.

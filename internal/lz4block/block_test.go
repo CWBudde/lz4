@@ -8,9 +8,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/pierrec/lz4/v4"
-	"github.com/pierrec/lz4/v4/internal/lz4block"
-	"github.com/pierrec/lz4/v4/internal/lz4errors"
+	"github.com/cwbudde/lz4"
+	"github.com/cwbudde/lz4/internal/lz4block"
+	"github.com/cwbudde/lz4/internal/lz4errors"
 )
 
 type testcase struct {

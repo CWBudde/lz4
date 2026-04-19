@@ -1,9 +1,20 @@
 # lz4 : LZ4 compression in pure Go
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/pierrec/lz4/v4.svg)](https://pkg.go.dev/github.com/pierrec/lz4/v4)
-[![CI](https://github.com/pierrec/lz4/workflows/ci/badge.svg)](https://github.com/pierrec/lz4/actions)
-[![Go Report Card](https://goreportcard.com/badge/github.com/pierrec/lz4)](https://goreportcard.com/report/github.com/pierrec/lz4)
-[![GitHub tag (latest SemVer)](https://img.shields.io/github/tag/pierrec/lz4.svg?style=social)](https://github.com/pierrec/lz4/tags)
+[![Go Reference](https://pkg.go.dev/badge/github.com/cwbudde/lz4.svg)](https://pkg.go.dev/github.com/cwbudde/lz4)
+[![CI](https://github.com/cwbudde/lz4/workflows/ci/badge.svg)](https://github.com/cwbudde/lz4/actions)
+[![Go Report Card](https://goreportcard.com/badge/github.com/cwbudde/lz4)](https://goreportcard.com/report/github.com/cwbudde/lz4)
+[![GitHub tag (latest SemVer)](https://img.shields.io/github/tag/cwbudde/lz4.svg?style=social)](https://github.com/cwbudde/lz4/tags)
+
+## Fork Notice
+
+This is an active fork of [pierrec/lz4](https://github.com/pierrec/lz4), the original LZ4 implementation in pure Go authored by [Pierre Chifflier](https://github.com/pierrec). The fork is maintained at [cwbudde/lz4](https://github.com/cwbudde/lz4) and focuses on continued development, performance improvements, and increased test coverage beyond the upstream project.
+
+Import path:
+```
+github.com/cwbudde/lz4
+```
+
+All original contributors and their work are fully credited — see the [Contributors](#contributors) section below.
 
 ## Overview
 
@@ -15,13 +26,13 @@ The implementation is based on the reference C [one](https://github.com/lz4/lz4)
 Assuming you have the go toolchain installed:
 
 ```
-go get github.com/pierrec/lz4/v4
+go get github.com/cwbudde/lz4
 ```
 
 There is a command line interface tool to compress and decompress LZ4 files.
 
 ```
-go install github.com/pierrec/lz4/v4/cmd/lz4c@latest
+go install github.com/cwbudde/lz4/cmd/lz4c@latest
 ```
 
 Usage
@@ -83,7 +94,7 @@ Contributions are very welcome for bug fixing, performance improvements...!
 
 ## Contributors
 
-Thanks to all [contributors](https://github.com/pierrec/lz4/graphs/contributors)  so far!
+Thanks to all [contributors](https://github.com/cwbudde/lz4/graphs/contributors) so far!
 
 Special thanks to [@Zariel](https://github.com/Zariel) for his asm implementation of the decoder.
 

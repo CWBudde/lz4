@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/pierrec/cmdflag"
-	"github.com/pierrec/lz4/v4"
+	"github.com/cwbudde/lz4"
 	"github.com/schollz/progressbar/v3"
 )
 

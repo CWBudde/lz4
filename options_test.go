@@ -6,7 +6,7 @@ import (
 	"io"
 	"testing"
 
-	"github.com/pierrec/lz4/v4"
+	"github.com/cwbudde/lz4"
 )
 
 func TestSizeOptionWriter(t *testing.T) {

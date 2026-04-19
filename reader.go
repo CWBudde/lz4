@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"io"
 
-	"github.com/pierrec/lz4/v4/internal/lz4block"
-	"github.com/pierrec/lz4/v4/internal/lz4errors"
-	"github.com/pierrec/lz4/v4/internal/lz4stream"
+	"github.com/cwbudde/lz4/internal/lz4block"
+	"github.com/cwbudde/lz4/internal/lz4errors"
+	"github.com/cwbudde/lz4/internal/lz4stream"
 )
 
 var readerStates = []aState{

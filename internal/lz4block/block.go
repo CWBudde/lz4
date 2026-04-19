@@ -5,7 +5,7 @@ import (
 	"math/bits"
 	"sync"
 
-	"github.com/pierrec/lz4/v4/internal/lz4errors"
+	"github.com/cwbudde/lz4/internal/lz4errors"
 )
 
 const (
@@ -15,12 +15,19 @@ const (
 	winSize    = 1 << winSizeLog
 	winMask    = winSize - 1 // 64Kb window of previous data for dependent blocks
 
-	// hashLog determines the size of the hash table used to quickly find a previous match position.
+	// hashLog determines the size of the hash table used by the fast compressor
+	// to quickly find a previous match position.
 	// Its value influences the compression speed and memory usage, the lower the faster,
 	// but at the expense of the compression ratio.
-	// 16 seems to be the best compromise for fast compression.
-	hashLog = 16
+	// 15 reduces table pressure and improves speed on some corpora at the
+	// expense of more collisions, so it needs benchmark validation.
+	hashLog = 15
 	htSize  = 1 << hashLog
+
+	// The HC compressor uses a denser table because it searches chains more
+	// deeply and degrades quickly if collisions rise too much.
+	hcHashLog = 16
+	hcHtSize  = 1 << hcHashLog
 
 	mfLimit = 10 + minMatch // The last match cannot start within the last 14 bytes.
 
@@ -358,13 +365,13 @@ lastLiterals:
 // blockHash hashes 4 bytes into a value < winSize.
 func blockHashHC(x uint32) uint32 {
 	const hasher uint32 = 2654435761 // Knuth multiplicative hash.
-	return x * hasher >> (32 - winSizeLog)
+	return x * hasher >> (32 - hcHashLog)
 }
 
 type CompressorHC struct {
 	// hashTable: stores the last position found for a given hash
 	// chainTable: stores previous positions for a given hash
-	hashTable, chainTable [htSize]int
+	hashTable, chainTable [hcHtSize]int
 	needsReset            bool
 }
 
@@ -380,8 +387,8 @@ func CompressBlockHC(src, dst []byte, depth CompressionLevel) (int, error) {
 func (c *CompressorHC) CompressBlock(src, dst []byte, depth CompressionLevel) (_ int, err error) {
 	if c.needsReset {
 		// Zero out reused table to avoid non-deterministic output (issue #65).
-		c.hashTable = [htSize]int{}
-		c.chainTable = [htSize]int{}
+		c.hashTable = [hcHtSize]int{}
+		c.chainTable = [hcHtSize]int{}
 	}
 	c.needsReset = true // Only false on first call.
 

@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/pierrec/lz4/v4"
+	"github.com/cwbudde/lz4"
 )
 
 func _o(s ...lz4.Option) []lz4.Option {

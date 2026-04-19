@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/pierrec/lz4/v4/internal/lz4block"
-	"github.com/pierrec/lz4/v4/internal/lz4errors"
+	"github.com/cwbudde/lz4/internal/lz4block"
+	"github.com/cwbudde/lz4/internal/lz4errors"
 )
 
 // writeFrame compresses data into dst using the given concurrency level.

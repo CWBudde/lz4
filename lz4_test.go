@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/pierrec/lz4/v4"
+	"github.com/cwbudde/lz4"
 )
 
 var testPayload = bytes.Repeat([]byte("hello lz4 world! "), 100)

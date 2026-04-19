@@ -11,8 +11,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/pierrec/lz4/v4"
-	"github.com/pierrec/lz4/v4/internal/lz4block"
+	"github.com/cwbudde/lz4"
+	"github.com/cwbudde/lz4/internal/lz4block"
 )
 
 func TestWriter(t *testing.T) {
