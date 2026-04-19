@@ -52,10 +52,9 @@ function loadSample(name) {
 }
 
 // ─── File upload ──────────────────────────────────────────────────────────────
-document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("file-input").addEventListener("change", handleFileUpload);
-  document.getElementById("input-text").addEventListener("input", handleTextInput);
-});
+// Script is deferred, so DOM is ready when this runs
+document.getElementById("file-input").addEventListener("change", handleFileUpload);
+document.getElementById("input-text").addEventListener("input", handleTextInput);
 
 function handleFileUpload(e) {
   const file = e.target.files[0];

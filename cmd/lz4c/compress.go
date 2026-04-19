@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"code.cloudfoundry.org/bytefmt"
-	"github.com/pierrec/cmdflag"
 	"github.com/cwbudde/lz4"
+	"github.com/pierrec/cmdflag"
 	"github.com/schollz/progressbar/v3"
 )
 
