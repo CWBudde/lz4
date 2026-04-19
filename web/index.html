@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LZ4 Compression Demo</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="wasm_exec.js"></script>
+  <script src="main.js" defer></script>
+</head>
+<body>
+
+<div id="loading">Loading WebAssembly</div>
+
+<header>
+  <h1>LZ4 Compression Demo <span class="badge">Go WASM</span></h1>
+  <p>Compress and decompress data in your browser using a Go WebAssembly module</p>
+</header>
+
+<main>
+
+  <!-- About -->
+  <section class="card">
+    <h2>About LZ4</h2>
+    <p class="description">
+      LZ4 is an extremely fast lossless compression algorithm focused on compression and
+      decompression speed. It trades some compression ratio for dramatically higher throughput
+      compared to algorithms like zlib or zstd. Typical compression speeds exceed 500 MB/s,
+      and decompression can surpass 4 GB/s on modern hardware.
+      <br><br>
+      <strong>Fast</strong> mode targets maximum speed. <strong>L1–L9</strong> are
+      high-compression modes that achieve better ratios at the cost of slower compression
+      (decompression stays fast). L6 is a good balance for archiving.
+    </p>
+  </section>
+
+  <!-- Input -->
+  <section class="card" id="input-section">
+    <h2>Input Data</h2>
+    <div class="sample-buttons">
+      <button class="sample-btn" onclick="loadSample('lorem')">Lorem Ipsum</button>
+      <button class="sample-btn" onclick="loadSample('json')">JSON Data</button>
+      <button class="sample-btn" onclick="loadSample('repetitive')">Repetitive Text</button>
+      <button class="sample-btn" onclick="loadSample('random')">Random Bytes</button>
+    </div>
+    <textarea id="input-text" placeholder="Enter or paste text to compress, or choose a sample above…"></textarea>
+    <div class="file-row">
+      <label class="file-label">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+          <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/>
+        </svg>
+        Upload File
+        <input type="file" id="file-input">
+      </label>
+      <span id="file-name">No file selected</span>
+    </div>
+  </section>
+
+  <!-- Controls -->
+  <section class="card">
+    <div class="controls-row">
+      <label>
+        Compression Level:
+        <select id="level-select">
+          <option value="0">Fast (maximum speed)</option>
+          <option value="512">L1</option>
+          <option value="1024">L2</option>
+          <option value="2048">L3</option>
+          <option value="4096">L4</option>
+          <option value="8192" selected>L5</option>
+          <option value="16384">L6</option>
+          <option value="32768">L7</option>
+          <option value="65536">L8</option>
+          <option value="131072">L9 (maximum ratio)</option>
+        </select>
+      </label>
+      <button id="compress-btn" class="btn btn-primary" onclick="doCompress()">Compress</button>
+      <button id="decompress-btn" class="btn btn-secondary" onclick="doDecompress()" disabled>Decompress</button>
+    </div>
+  </section>
+
+  <!-- Results -->
+  <section class="card hidden" id="results-section">
+    <h2>Results</h2>
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="label">Original Size</div>
+        <div class="value" id="stat-original">—</div>
+      </div>
+      <div class="stat-box">
+        <div class="label">Compressed Size</div>
+        <div class="value" id="stat-compressed">—</div>
+      </div>
+      <div class="stat-box ratio">
+        <div class="label">Space Saved</div>
+        <div class="value" id="stat-saved">—</div>
+      </div>
+      <div class="stat-box time">
+        <div class="label">Time</div>
+        <div class="value" id="stat-time">—</div>
+      </div>
+    </div>
+
+    <div class="ratio-bar-wrap">
+      <div class="bar-label">Compression ratio — smaller bar = better compression</div>
+      <div class="ratio-bar-track">
+        <div class="ratio-bar-fill" id="ratio-bar" style="width:100%"></div>
+      </div>
+    </div>
+
+    <div class="hex-section">
+      <h3>Compressed bytes — hex preview (first 128 bytes)</h3>
+      <pre id="hex-dump"></pre>
+    </div>
+  </section>
+
+  <!-- Benchmark -->
+  <section class="card" id="benchmark-section">
+    <h2>Live Benchmark</h2>
+    <p class="description">
+      Runs your current input data through all compression levels and measures throughput.
+      Each level runs for ~300 ms to get a stable result. The benchmark runs on the WASM
+      thread so the page will be unresponsive for a few seconds.
+    </p>
+    <button id="bench-btn" class="btn btn-primary" onclick="doBenchmark()">Run Benchmark</button>
+    <div class="bench-progress hidden" id="bench-progress">
+      <div class="bench-progress-fill" id="bench-progress-fill" style="width:0%"></div>
+    </div>
+    <div id="bench-results" class="hidden">
+      <canvas id="bench-chart" width="700" height="300"></canvas>
+      <table id="bench-table">
+        <thead>
+          <tr>
+            <th>Level</th>
+            <th>Compression Ratio</th>
+            <th>Compress MB/s</th>
+            <th>Decompress MB/s</th>
+          </tr>
+        </thead>
+        <tbody id="bench-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<div id="status-bar">Ready — load a sample or type text above</div>
+
+</body>
+</html>

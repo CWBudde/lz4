@@ -165,6 +165,21 @@ func Benchmark_XXH32_Checksum(b *testing.B) {
 	}
 }
 
+func Benchmark_XXH32_Stream32(b *testing.B) {
+	var h xxh32.XXHZero
+	for n := 0; n < b.N; n++ {
+		for p := 0; p < len(testdata1); p += 32 {
+			end := p + 32
+			if end > len(testdata1) {
+				end = len(testdata1)
+			}
+			_, _ = h.Write(testdata1[p:end])
+		}
+		h.Sum32()
+		h.Reset()
+	}
+}
+
 // The following two benchmark the case where 3/4 calls are not 4-byte-aligned.
 func Benchmark_XXH32Unaligned(b *testing.B) {
 	var h xxh32.XXHZero

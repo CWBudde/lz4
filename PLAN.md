@@ -187,11 +187,13 @@ These are real options, but they should come after the measurement cleanup and G
 - Consider: `internal/xxh32/xxh32zero_arm64.s`, `internal/xxh32/xxh32zero_arm64.go`
 - Test: `internal/xxh32/xxh32zero_test.go`
 
-- [ ] Implement `ChecksumZero` and `update` for `amd64` in Plan 9 assembly.
-- [ ] Keep the Go fallback untouched for correctness and portability.
-- [ ] Add focused benchmarks for `ChecksumZero` and streaming `update`.
-- [ ] Re-run frame decode benchmarks with checksums enabled and disabled to isolate the win.
-- [ ] If the `amd64` path is successful, decide whether an `arm64` port is worth doing immediately.
+- [x] Implement `ChecksumZero` and `update` for `amd64` in Plan 9 assembly.
+- [x] Keep the Go fallback untouched for correctness and portability.
+- [x] Add focused benchmarks for `ChecksumZero` and streaming `update`.
+- [x] Re-run frame decode benchmarks with checksums enabled and disabled to isolate the win.
+- [x] If the `amd64` path is successful, decide whether an `arm64` port is worth doing immediately.
+
+Decision: defer `arm64` for now. The `amd64` work is in place and verified, but the next highest-signal step is to measure broader frame-level wins before adding another architecture-specific assembly path.
 
 **Why this is a good `asm` target:** it is small, isolated, already partially assembly-backed on ARM, and the stream profile already proves it matters.
 

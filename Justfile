@@ -119,3 +119,14 @@ init-hooks:
 
 # Fix all auto-fixable issues
 fix: lint-fix fmt
+
+# Web demo commands
+
+# Build the WASM demo binary
+build-wasm:
+    chmod +x web/build-wasm.sh
+    ./web/build-wasm.sh
+
+# Build and serve the web demo at http://localhost:8080
+serve-web: build-wasm
+    go run ./cmd/serve
