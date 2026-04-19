@@ -1,0 +1,34 @@
+version = "2"
+
+[run]
+timeout = "5m"
+tests = true
+
+[linters]
+default = "standard"
+enable = [
+  "misspell",
+  "gocritic",
+    "revive"
+]
+disable = [
+    "depguard",
+    "errcheck",
+]
+
+[linters.exclusions]
+generated = "strict"
+
+[linters.settings]
+
+[linters.settings.gocritic]
+enabled-tags = ["diagnostic", "style", "performance"]
+disabled-checks = ["commentedOutCode", "unnamedResult", "importShadow", "dupImport", "dupSubExpr"]
+[linters.settings.revive]
+[[linters.settings.revive.rules]]
+name = "file-length-limit"
+
+[[linters.settings.revive.rules.arguments]]
+max = 1500
+skip-comments = false
+skip-blank-lines = false

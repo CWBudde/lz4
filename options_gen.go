@@ -35,6 +35,7 @@ func (i BlockSize) String() string {
 		return "BlockSize(" + strconv.FormatInt(int64(i), 10) + ")"
 	}
 }
+
 func _() {
 	// An "invalid array index" compiler error signifies that the constant values have changed.
 	// Re-run the stringer command to generate them again.

@@ -99,8 +99,8 @@ func updateGo(v *[4]uint32, buf *[16]byte, input []byte) {
 	}
 
 	for ; len(input) >= 16; input = input[16:] {
-		sub := input[:16] //BCE hint for compiler
-		v1 = rol13(v1+binary.LittleEndian.Uint32(sub[:])*prime2) * prime1
+		sub := input[:16] // BCE hint for compiler
+		v1 = rol13(v1+binary.LittleEndian.Uint32(sub)*prime2) * prime1
 		v2 = rol13(v2+binary.LittleEndian.Uint32(sub[4:])*prime2) * prime1
 		v3 = rol13(v3+binary.LittleEndian.Uint32(sub[8:])*prime2) * prime1
 		v4 = rol13(v4+binary.LittleEndian.Uint32(sub[12:])*prime2) * prime1
@@ -152,8 +152,8 @@ func checksumZeroGo(input []byte) uint32 {
 		v4 := prime1minus
 		p := 0
 		for n := n - 16; p <= n; p += 16 {
-			sub := input[p:][:16] //BCE hint for compiler
-			v1 = rol13(v1+binary.LittleEndian.Uint32(sub[:])*prime2) * prime1
+			sub := input[p:][:16] // BCE hint for compiler
+			v1 = rol13(v1+binary.LittleEndian.Uint32(sub)*prime2) * prime1
 			v2 = rol13(v2+binary.LittleEndian.Uint32(sub[4:])*prime2) * prime1
 			v3 = rol13(v3+binary.LittleEndian.Uint32(sub[8:])*prime2) * prime1
 			v4 = rol13(v4+binary.LittleEndian.Uint32(sub[12:])*prime2) * prime1

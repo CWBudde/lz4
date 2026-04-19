@@ -138,7 +138,7 @@ func (r *Reader) Read(buf []byte) (n int, err error) {
 					return
 				}
 
-				//Check for new stream.
+				// Check for new stream.
 				r.Reset(r.src)
 				if err = r.init(); r.state.next(err) {
 					return
@@ -176,7 +176,7 @@ func (r *Reader) Read(buf []byte) (n int, err error) {
 
 // read uncompresses the next block as follow:
 //   - if buf has enough room, the block is uncompressed into it directly
-//     and the lenght of used space is returned
+//     and the length of used space is returned
 //   - else, the uncompress data is stored in r.data and 0 is returned
 func (r *Reader) read(buf []byte) (int, error) {
 	block := r.frame.Blocks.Block

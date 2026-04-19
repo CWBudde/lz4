@@ -10,10 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/schollz/progressbar/v3"
-
 	"github.com/pierrec/cmdflag"
 	"github.com/pierrec/lz4/v4"
+	"github.com/schollz/progressbar/v3"
 )
 
 // Uncompress uncompresses a set of files or from stdin to stdout.

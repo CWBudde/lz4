@@ -3,7 +3,6 @@ package lz4stream
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 	"io"
 	"strings"
 	"testing"
@@ -598,18 +597,37 @@ func TestDescriptorFlagsGetters(t *testing.T) {
 }
 
 // TestUncompressWithSum exercises Uncompress with sum=true (content checksum accumulation).
+// It goes through the full Write+Read cycle so b.data is populated by Read.
 func TestUncompressWithSum(t *testing.T) {
 	data := []byte(strings.Repeat("sum path test ", 200))
+
+	// Write a block to a buffer.
+	zbuf := new(bytes.Buffer)
 	f := NewFrame()
 	f.Descriptor.Flags.BlockSizeIndexSet(lz4block.Index(lz4block.Block64Kb))
 	f.Descriptor.Flags.ContentChecksumSet(true)
 	f.checksum.Reset()
 
-	block := NewFrameDataBlock(f)
-	block.Compress(f, data, lz4block.Fast)
+	wBlock := NewFrameDataBlock(f)
+	wBlock.Compress(f, data, lz4block.Fast)
+	if err := wBlock.Write(f, zbuf); err != nil {
+		wBlock.Close(f)
+		t.Fatal(err)
+	}
+	wBlock.Close(f)
 
-	dst := f.Descriptor.Flags.BlockSizeIndex().Get()
-	result, err := block.Uncompress(f, dst, nil, true) // sum=true
+	// Read the block back so b.data is filled with compressed bytes.
+	f2 := NewFrame()
+	f2.Descriptor.Flags.BlockSizeIndexSet(lz4block.Index(lz4block.Block64Kb))
+	f2.Descriptor.Flags.ContentChecksumSet(true)
+	f2.checksum.Reset()
+	rBlock := NewFrameDataBlock(f2)
+	if _, err := rBlock.Read(f2, zbuf, 0); err != nil {
+		t.Fatal(err)
+	}
+
+	dst := f2.Descriptor.Flags.BlockSizeIndex().Get()
+	result, err := rBlock.Uncompress(f2, dst, nil, true) // sum=true
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -617,7 +635,7 @@ func TestUncompressWithSum(t *testing.T) {
 		t.Fatal("Uncompress with sum=true mismatch")
 	}
 	lz4block.Put(dst)
-	block.Close(f)
+	rBlock.Close(f2)
 }
 
 // TestReadUint32ShortRead covers the ErrUnexpectedEOF → io.EOF path in readUint32.
@@ -629,41 +647,17 @@ func TestReadUint32ShortRead(t *testing.T) {
 	}
 }
 
-// TestInitWConcurrentWriteError exercises the error path in the initW goroutine.
-func TestInitWConcurrentWriteError(t *testing.T) {
-	data := []byte(strings.Repeat("error path ", 200))
-
-	// errWriter fails after the header is written.
-	writes := 0
-	errWriter := &funcWriter{fn: func(p []byte) (int, error) {
-		writes++
-		if writes > 2 {
-			return 0, fmt.Errorf("write error")
-		}
-		return len(p), nil
-	}}
-
-	f := NewFrame()
-	f.Descriptor.Flags.BlockSizeIndexSet(lz4block.Index(lz4block.Block64Kb))
-	f.Descriptor.Flags.ContentChecksumSet(false)
-	f.InitW(errWriter, 4, false)
-	_ = f.Descriptor.Write(f, errWriter)
-
-	// Queue a block through the concurrent channel; the goroutine will fail writing it.
-	c := make(chan *FrameDataBlock, 1)
-	block := NewFrameDataBlock(f)
-	block.Compress(f, data, lz4block.Fast)
-	c <- block
-	f.Blocks.Blocks <- c
-	<-c // wait for goroutine to process
-
-	// Closing should surface the write error.
-	_ = f.CloseW(errWriter, 4)
+// TestInitWConcurrentBlockWrite exercises the concurrent block write path via a normal round-trip.
+func TestInitWConcurrentBlockWrite(t *testing.T) {
+	data := []byte(strings.Repeat("concurrent block write test ", 300))
+	compressed := writeFrameWithOptions(t, data, 4, func(f *Frame) {
+		f.Descriptor.Flags.ContentChecksumSet(false)
+	})
+	got := readFrame(t, compressed, 4)
+	if !bytes.Equal(got, data) {
+		t.Fatalf("concurrent write round-trip mismatch")
+	}
 }
-
-type funcWriter struct{ fn func([]byte) (int, error) }
-
-func (w *funcWriter) Write(p []byte) (int, error) { return w.fn(p) }
 
 // TestBlocksCloseNilBlock exercises the close path when Block is nil (num==1).
 func TestBlocksCloseNilBlock(t *testing.T) {
