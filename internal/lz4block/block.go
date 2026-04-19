@@ -72,11 +72,12 @@ type Compressor struct {
 // The match may be a false positive due to a hash collision or an old entry.
 // If si < winSize, the return value may be negative.
 func (c *Compressor) get(h uint32, si int) int {
-	h &= htSize - 1
-	i := 0
-	if c.inUse[h/32]&(1<<(h%32)) != 0 {
-		i = int(c.table[h])
+	word := h >> 5
+	bit := uint32(1) << (h & 31)
+	if c.inUse[word]&bit == 0 {
+		return si - winSize
 	}
+	i := int(c.table[h])
 	i += si &^ winMask
 	if i >= si {
 		// Try previous 64kiB block (negative when in first block).
@@ -86,9 +87,10 @@ func (c *Compressor) get(h uint32, si int) int {
 }
 
 func (c *Compressor) put(h uint32, si int) {
-	h &= htSize - 1
+	word := h >> 5
+	bit := uint32(1) << (h & 31)
 	c.table[h] = uint16(si)
-	c.inUse[h/32] |= 1 << (h % 32)
+	c.inUse[word] |= bit
 }
 
 func (c *Compressor) reset() { c.inUse = [htSize / 32]uint32{} }
