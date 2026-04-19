@@ -23,6 +23,11 @@ const (
 	htSize  = 1 << hashLog
 
 	mfLimit = 10 + minMatch // The last match cannot start within the last 14 bytes.
+
+	incompressibleMinSize         = 8 << 10
+	incompressibleMaxSize         = 64 << 10
+	incompressibleSamples         = 64
+	incompressibleRepeatThreshold = 3
 )
 
 func recoverBlock(e *error) {
@@ -35,6 +40,57 @@ func recoverBlock(e *error) {
 func blockHash(x uint64) uint32 {
 	const prime6bytes = 227718039650203
 	return uint32(((x << (64 - 48)) * prime6bytes) >> (64 - hashLog))
+}
+
+func likelyIncompressible(src []byte) bool {
+	if len(src) < incompressibleMinSize || len(src) > incompressibleMaxSize {
+		return false
+	}
+
+	firstHalfLen := len(src) / 2
+	secondHalfLen := len(src) - firstHalfLen
+	if firstHalfLen >= 8 && secondHalfLen >= 8 {
+		limit := firstHalfLen
+		if secondHalfLen < limit {
+			limit = secondHalfLen
+		}
+		const halfSamples = incompressibleSamples / 2
+		step := (limit - 8) / (halfSamples - 1)
+		if step >= 8 {
+			matches := 0
+			for sample, off := 0, 0; sample < halfSamples && off+8 <= limit; sample, off = sample+1, off+step {
+				if binary.LittleEndian.Uint64(src[off:]) == binary.LittleEndian.Uint64(src[firstHalfLen+off:]) {
+					matches++
+					if matches >= 2 {
+						return false
+					}
+				}
+			}
+		}
+	}
+
+	last := len(src) - 8
+	step := last / (incompressibleSamples - 1)
+	if step < 8 {
+		return false
+	}
+
+	var seen [32]uint64
+	repeats := 0
+	for sample, off := 0, 0; sample < incompressibleSamples && off <= last; sample, off = sample+1, off+step {
+		h := blockHash(binary.LittleEndian.Uint64(src[off:])) & 2047
+		word := h >> 6
+		bit := uint64(1) << (h & 63)
+		if seen[word]&bit != 0 {
+			repeats++
+			if repeats >= incompressibleRepeatThreshold {
+				return false
+			}
+			continue
+		}
+		seen[word] |= bit
+	}
+	return true
 }
 
 func CompressBlockBound(n int) int {
@@ -110,6 +166,9 @@ func (c *Compressor) CompressBlock(src, dst []byte) (int, error) {
 
 	// Return 0, nil only if the destination buffer size is < CompressBlockBound.
 	isNotCompressible := len(dst) < CompressBlockBound(len(src))
+	if isNotCompressible && len(dst) == len(src) && likelyIncompressible(src) {
+		return 0, nil
+	}
 
 	// adaptSkipLog sets how quickly the compressor begins skipping blocks when data is incompressible.
 	// This significantly speeds up incompressible data and usually has very small impact on compression.
