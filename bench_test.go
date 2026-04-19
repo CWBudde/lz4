@@ -236,6 +236,27 @@ func benchmarkFrameCompress(b *testing.B, uncompressed []byte, options ...lz4.Op
 	}
 }
 
+func benchmarkFrameCompressFreshWriter(b *testing.B, uncompressed []byte, outbytes int, options ...lz4.Option) {
+	b.SetBytes(int64(len(uncompressed)))
+	b.ReportAllocs()
+	b.ReportMetric(float64(outbytes), "outbytes")
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		var w bytes.Buffer
+		zw := lz4.NewWriter(&w)
+		if err := zw.Apply(options...); err != nil {
+			b.Fatal(err)
+		}
+		if _, err := io.Copy(zw, bytes.NewReader(uncompressed)); err != nil {
+			b.Fatal(err)
+		}
+		if err := zw.Close(); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
 func BenchmarkFrameCompress(b *testing.B) {
 	b.Run("Pg1661ChecksumOn", func(b *testing.B) {
 		benchmarkFrameCompress(b, pg1661)
@@ -244,9 +265,10 @@ func BenchmarkFrameCompress(b *testing.B) {
 		benchmarkFrameCompress(b, pg1661, lz4.ChecksumOption(false))
 	})
 	b.Run("Pg1661Concurrent", func(b *testing.B) {
-		benchmarkFrameCompress(
+		benchmarkFrameCompressFreshWriter(
 			b,
 			pg1661,
+			len(pg1661FrameConcurrent),
 			lz4.BlockSizeOption(lz4.Block64Kb),
 			lz4.ConcurrencyOption(runtime.GOMAXPROCS(0)),
 		)

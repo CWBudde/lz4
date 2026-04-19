@@ -145,15 +145,15 @@ These are real options, but they should come after the measurement cleanup and G
 - Modify: `bench_test.go`
 - Create: `internal/lz4block/bench_test.go` or similar block-only benchmark file if needed
 
-- [ ] Replace `BenchmarkUncompress` so it benchmarks a real raw block, not a framed `.lz4` test file.
-- [ ] Reset the underlying `bytes.Buffer` in `benchmarkCompress` before each iteration.
-- [ ] Add checksum-on and checksum-off stream benchmarks for both reader and writer paths.
-- [ ] Add a benchmark that exercises concurrent frame compression and decompression with `ConcurrencyOption(runtime.GOMAXPROCS(0))`.
-- [ ] Add benchmark names that clearly distinguish block-vs-frame and checksum-vs-no-checksum paths.
-- [ ] Capture baseline results with:
+- [x] Replace `BenchmarkUncompress` so it benchmarks a real raw block, not a framed `.lz4` test file.
+- [x] Reset the underlying `bytes.Buffer` in `benchmarkCompress` before each iteration.
+- [x] Add checksum-on and checksum-off stream benchmarks for both reader and writer paths.
+- [x] Add a benchmark that exercises concurrent frame compression and decompression with `ConcurrencyOption(runtime.GOMAXPROCS(0))`.
+- [x] Add benchmark names that clearly distinguish block-vs-frame and checksum-vs-no-checksum paths.
+- [x] Capture baseline results with:
   - `go test -run '^$' -bench . -benchmem`
   - `go test -run '^$' -bench . -benchmem -tags noasm`
-- [ ] Save the baseline numbers in the commit message or a short benchmark note before changing hot code.
+- [x] Save the baseline numbers in the commit message or a short benchmark note before changing hot code.
 
 **Why this task comes first:** the repo currently has at least one invalid decode benchmark and one skewed stream-compress benchmark. Optimization work without fixing those will create false positives.
 
