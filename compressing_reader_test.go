@@ -69,3 +69,19 @@ func TestCompressingReader(t *testing.T) {
 		}
 	}
 }
+
+func TestCompressingReaderSource(t *testing.T) {
+	underlying := io.NopCloser(bytes.NewReader([]byte("hello")))
+	cr := lz4.NewCompressingReader(underlying)
+	if got := cr.Source(); got != underlying {
+		t.Fatal("Source() did not return the underlying reader")
+	}
+}
+
+func TestCompressingReaderClose(t *testing.T) {
+	data := bytes.Repeat([]byte("close test "), 50)
+	cr := lz4.NewCompressingReader(io.NopCloser(bytes.NewReader(data)))
+	if err := cr.Close(); err != nil {
+		t.Fatalf("Close() returned unexpected error: %v", err)
+	}
+}

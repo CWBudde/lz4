@@ -362,6 +362,37 @@ func TestReader_WriteTo(t *testing.T) {
 	}
 }
 
+func TestReaderSize(t *testing.T) {
+	data := bytes.Repeat([]byte("size getter test "), 50)
+
+	out := new(bytes.Buffer)
+	zw := lz4.NewWriter(out)
+	if err := zw.Apply(lz4.SizeOption(uint64(len(data)))); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := zw.Write(data); err != nil {
+		t.Fatal(err)
+	}
+	if err := zw.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	zr := lz4.NewReader(out)
+	// Before any read, state is newState so Size() should return 0.
+	if got := zr.Size(); got != 0 {
+		t.Errorf("Size() before read = %d; want 0", got)
+	}
+	// Trigger header parsing with a small read.
+	buf := make([]byte, 1)
+	if _, err := zr.Read(buf); err != nil {
+		t.Fatal(err)
+	}
+	// Now in readState — frame descriptor is populated.
+	if got, want := zr.Size(), len(data); got != want {
+		t.Errorf("Size() during read = %d; want %d", got, want)
+	}
+}
+
 // TestReader_DirectModeStaleData verifies that a zero-length uncompressed block
 // in direct mode does not cause stale pool data to be returned. Before the fix,
 // r.data was not cleared after a direct-mode decompress, so a subsequent

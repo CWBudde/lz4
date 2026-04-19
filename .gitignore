@@ -34,3 +34,7 @@ cmd/*/*exe
 .idea
 
 fuzz/*.zip
+
+# AI agents
+.claude/
+.codex

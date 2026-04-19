@@ -245,6 +245,31 @@ func TestWriterFlush(t *testing.T) {
 	}
 }
 
+func TestWriterFlushClosed(t *testing.T) {
+	out := new(bytes.Buffer)
+	zw := lz4.NewWriter(out)
+	data := strings.Repeat("abcde", 100)
+	if _, err := zw.Write([]byte(data)); err != nil {
+		t.Fatal(err)
+	}
+	if err := zw.Close(); err != nil {
+		t.Fatal(err)
+	}
+	// Flush on a closed writer should return nil (default branch).
+	if err := zw.Flush(); err != nil {
+		t.Fatalf("Flush on closed writer returned error: %v", err)
+	}
+}
+
+func TestWriterFlushEmpty(t *testing.T) {
+	out := new(bytes.Buffer)
+	zw := lz4.NewWriter(out)
+	// Flush on a writer that was never written to (newState with no data).
+	if err := zw.Flush(); err != nil {
+		t.Fatalf("Flush on new writer returned error: %v", err)
+	}
+}
+
 func TestWriterLegacy(t *testing.T) {
 	goldenFiles := []string{
 		"testdata/vmlinux_LZ4_19377.gz",
