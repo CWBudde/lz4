@@ -21,6 +21,10 @@ All original contributors and their work are fully credited — see the [Contrib
 This package provides a streaming interface to [LZ4 data streams](http://fastcompression.blogspot.fr/2013/04/lz4-streaming-format-final.html) as well as low level compress and uncompress functions for LZ4 data blocks.
 The implementation is based on the reference C [one](https://github.com/lz4/lz4).
 
+## Web Demo
+
+Try LZ4 compression directly in your browser: [cwbudde.github.io/lz4](https://cwbudde.github.io/lz4/)
+
 ## Install
 
 Assuming you have the go toolchain installed:
